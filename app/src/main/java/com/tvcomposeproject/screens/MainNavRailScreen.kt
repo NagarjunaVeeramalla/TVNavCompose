@@ -1,6 +1,5 @@
 package com.tvcomposeproject.screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.NavigationRail
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,23 +26,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.tvcomposeproject.datamodels.Screens
 import com.tvcomposeproject.ui.theme.TvComposeSampleProjectTheme
+import com.tvcomposeproject.viewmodel.NavRailViewModel
 
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun MainNavRailScreen() {
+fun MainNavRailScreen(navRailViewModel: NavRailViewModel = viewModel()) {
     var selectedScreen by remember { mutableStateOf<Screens>(Screens.DemoScreen) }
     val firstItemFocusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
+    val demoScreenUiState by navRailViewModel.demoScreenUiState.collectAsState()
+    val feedbackScreenUiState by navRailViewModel.feedbackScreenUiState.collectAsState()
+    val feedbackSubmissionState by navRailViewModel.feedbackSubmissionState.collectAsState()
+
     Row(
         modifier = Modifier.fillMaxSize()
-            .background(color = Color.Black)
+            .background(color = Color.DarkGray)
     ) {
         NavigationRail(
             modifier = Modifier.width(240.dp), containerColor = Color(0xFF2E2E2E), header = {
@@ -73,20 +79,26 @@ fun MainNavRailScreen() {
                 .padding(32.dp)
         ) {
             when (selectedScreen) {
-                is Screens.DemoScreen -> DemoScreen()
-                is Screens.Feedback -> FeedbackScreen()
+                is Screens.DemoScreen -> DemoScreen(demoScreenUiState = demoScreenUiState)
+                is Screens.Feedback -> FeedbackScreen(
+                    feedbackScreenUiState = feedbackScreenUiState,
+                    feedbackSubmissionState = feedbackSubmissionState,
+                    onSubmitFeedback = { title, questions ->
+                        navRailViewModel.submitFeedback(title, questions)
+                    },
+                    onUpdateRating = { questionId, rating ->
+                        navRailViewModel.updateQuestionRating(questionId, rating)
+                    }
+                )
             }
         }
     }
     LaunchedEffect(Unit) {
         firstItemFocusRequester.requestFocus()
     }
-    LaunchedEffect(selectedScreen) {
-        Log.d("NavRailItem", "selectedScreen: ${selectedScreen.title}")
-    }
 }
 
-@Preview
+@Preview(device = "id:tv_1080p")
 @Composable
 fun MainNavRailScreenPreview() {
     TvComposeSampleProjectTheme {

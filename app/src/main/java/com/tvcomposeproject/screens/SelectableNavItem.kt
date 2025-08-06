@@ -32,6 +32,7 @@ fun SelectableNavItem(
     icon: @Composable () -> Unit = {}
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    val containerColor  = getContainerColor(isFocused, isSelected)
     Surface(
         onClick = onClick, modifier = modifier
             .fillMaxWidth()
@@ -51,7 +52,7 @@ fun SelectableNavItem(
             focusedShape = RoundedCornerShape(12.dp)
         ),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = if(isFocused) Color.White else Color.Transparent,
+            containerColor = containerColor,
             contentColor = if(isFocused) Color.Black else Color.White,
             focusedContainerColor = Color.White,
             focusedContentColor = Color.Black
@@ -65,5 +66,13 @@ fun SelectableNavItem(
             icon()
             label()
         }
+    }
+}
+
+private fun getContainerColor(isFocused: Boolean, isSelected: Boolean): Color {
+    return when {
+        isFocused -> Color.White
+        isSelected -> Color.Gray
+        else -> Color.Transparent
     }
 }
